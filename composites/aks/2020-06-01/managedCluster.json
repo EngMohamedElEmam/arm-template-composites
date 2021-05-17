@@ -1,0 +1,99 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourcesApiVersion": {
+            "type": "string"
+        },
+        "resourceObject": {
+            "type": "object"
+        },
+        "guid": {
+            "type": "string",
+            "defaultValue": "[newGuid()]"
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "apiVersion": "[parameters('resourcesApiVersion')]",
+            "name": "[concat(deployment().name, '-', parameters('resourceObject').name)]",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, '../../../components/aks/2020-03-01/managedClusters.json')]"
+                },
+                "parameters": {
+                    "resourceObject": {
+                        "value": "[parameters('resourceObject')]"
+                    }
+                }
+            },
+            "dependsOn": [
+            ]
+        },
+        {
+            "name": "[concat(deployment().name, '-', 'acr')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[parameters('resourcesApiVersion')]",
+            "condition": "[contains(parameters('resourceObject'), 'containerRegistry')]",
+            "resourceGroup": "[if(contains(parameters('resourceObject'), 'containerRegistry'), parameters('resourceObject').containerRegistry.resourceGroup, resourceGroup().name)]",
+            "dependsOn": [
+                "[concat(deployment().name, '-', parameters('resourceObject').name)]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "apiVersion": "2018-09-01-preview",
+                            "type": "Microsoft.ContainerRegistry/registries/providers/roleAssignments",
+                            "name": "[concat(parameters('resourceObject').containerRegistry.name, '/Microsoft.Authorization/', parameters('guid'))]",
+                            "properties": {
+                                "principalId": "[reference(concat(deployment().name, '-', parameters('resourceObject').name)).outputs.managedCluster.value.properties.identityProfile.kubeletidentity.objectId]",
+                                "principalType": "ServicePrincipal",
+                                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+                                "scope": "[resourceId(parameters('resourceObject').containerRegistry.resourceGroup, 'Microsoft.ContainerRegistry/registries/', parameters('resourceObject').containerRegistry.name)]"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "name": "[concat(deployment().name, '-', 'csra', '-', copyIndex())]",
+            "apiVersion": "[parameters('resourcesApiVersion')]",
+            "resourceGroup": "[parameters('resourceObject').virtualNetwork.resourceGroup]",
+            "condition": "[contains(parameters('resourceObject').properties, 'agentPoolProfiles')]",
+            "copy": {
+                "name": "csracopy",
+                "count": "[length(parameters('resourceObject').properties.agentPoolProfiles)]"
+            },
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, '../../../components/network/2018-09-01-preview/virtualNetworks/subnets/providers/roleAssignments.json')]"
+                },
+                "parameters": {
+                    "resourceObject": {
+                        "value": {
+                            "name": "[concat(parameters('resourceObject').virtualNetwork.name, '/', last(split(parameters('resourceObject').properties.agentPoolProfiles[copyIndex()].vnetSubnetId, '/')), '/Microsoft.Authorization')]",
+                            "properties": {
+                                "principalId": "[reference(concat(deployment().name, '-', parameters('resourceObject').name)).outputs.managedCluster.value.properties.identityProfile.kubeletidentity.objectId]",
+                                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+                                "scope": "[parameters('resourceObject').properties.agentPoolProfiles[copyIndex()].vnetSubnetId]"
+                            }
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+            ]
+        }
+    ]
+}

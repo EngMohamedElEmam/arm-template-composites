@@ -1,0 +1,95 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "options": {
+            "type": "object",
+            "defaultValue": {
+                "copyMode": "parallel"
+            }
+        },
+        "resources": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        "deploymentsApiVersion": "2019-10-01",
+        "resourcesDefinitions": [
+            {
+                "name": "storageAccounts",
+                "uri": "components/storage/2019-06-01/storageAccounts.json"
+            },
+            {
+                "name": "networkInterfaces",
+                "uri": "components/network/2019-09-01/networkInterface.json"
+            },
+            {
+                "name": "managedClusters",
+                "uri": "composites/aks/2020-06-01/managedCluster.json"
+            },
+            {
+                "name": "vaults",
+                "uri": "composites/keyvault/2020-12-01/vault.json"
+            },
+            {
+                "name": "sqlServers",
+                "uri": "composites/sql/2020-12-01/server.json"
+            },
+            {
+                "name": "privateEndpoints",
+                "uri": "components/network/2020-06-01/privateEndpoints.json"
+            },
+            {
+                "name": "subnets",
+                "uri": "components/network/2020-06-01/virtualNetworks/subnets.json"
+            },
+            {
+                "name": "dataFactories",
+                "uri": "composites/datafactory/2020-12-01/factory.json"
+            },
+            {
+                "name": "userAssignedIdentities",
+                "uri": "components/managedidentity/2018-11-30/userAssignedIdentities.json"
+            },
+            {
+                "name": "searchServices",
+                "uri": "composites/search/2021-01-01/searchService.json"
+            },
+            {
+                "name": "insights",
+                "uri": "composites/insights/2021-01-01/component.json"
+            }
+        ]
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('deploymentsApiVersion')]",
+            "name": "[concat(deployment().name, '-dl-', copyIndex())]",
+            "copy": {
+                "name": "resourcescopy",
+                "count": "[length(variables('resourcesDefinitions'))]",
+                "mode": "[parameters('options').copyMode]"
+            },
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'nested/definitionloop.json')]"
+                },
+                "parameters": {
+                    "resourcesApiVersion": {
+                        "value": "[variables('deploymentsApiVersion')]"
+                    },
+                    "resourceDefinition": {
+                        "value": "[variables('resourcesDefinitions')[copyIndex()]]"
+                    },
+                    "resources": {
+                        "value": "[parameters('resources')]"
+                    }
+                }
+            },
+            "dependsOn": [
+            ]
+        }
+    ]
+}

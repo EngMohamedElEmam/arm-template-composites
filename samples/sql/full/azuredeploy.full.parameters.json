@@ -1,0 +1,88 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "options": {
+            "value": {
+                "copyMode": "serial"
+            }
+        },
+        "resources": {
+            "value": {
+                "subnets": [
+                    {
+                        "name": "sn-eastus-sql-10.1.6.0-24",
+                        "virtualNetworkName": "vn-eastus-10.1.0.0-19",
+                        "resourceGroup": "network",
+                        "properties": {
+                            "addressPrefix": "[reference(resourceId('network', 'Microsoft.Network/virtualNetworks/subnets/', 'vn-eastus-10.1.0.0-19', 'sn-eastus-sql-10.1.6.0-24'), '2020-06-01').addressPrefix]",
+                            "privateEndpointNetworkPolicies": "Disabled"
+                        }
+                    }
+                ],
+                "sqlServers": [
+                    {
+                        "name": "sql-test",
+                        "properties": {
+                            "administratorLogin": "AdminGK",
+                            "administratorLoginPassword": "LemonSherbet123.!",
+                            "version": "12.0"
+                        },
+                        "activeDirectory": {
+                            "properties": {
+                                "administratorType": "ActiveDirectory",
+                                "login": "SQL Administrators",
+                                "sid": "0d761e3b-8403-4da1-b95f-cf463b2c292a",
+                                "tenantId": "[subscription().tenantId]"
+                            }
+                        },
+                        "elasticPool": {
+                            "name": "ep-test",
+                            "sku": {
+                                "name": "StandardPool",
+                                "tier": "Standard",
+                                "capacity": 50
+                            },
+                            "properties": {
+                                "perDatabaseSettings": {
+                                    "minCapacity": 0,
+                                    "maxCapacity": 50
+                                },
+                                "licenseType": "LicenseIncluded"
+                            }
+                        },
+                        "databases": [
+                            {
+                                "name": "db_test",
+                                "properties": {
+                                    "createMode": "Default"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "privateEndpoints": [
+                    {
+                        "name": "pe-sql-test",
+                        "properties": {
+                            "subnet": {
+                                "id": "[resourceId('network', 'Microsoft.Network/virtualNetworks/subnets', 'vn-eastus-10.1.0.0-19', 'sn-eastus-sql-10.1.6.0-24')]"
+                            },
+                            "privateLinkServiceConnections": [
+                                {
+                                    "name": "pe-sql-test",
+                                    "properties": {
+                                        "privateLinkServiceId": "[resourceId('Microsoft.Sql/servers', 'sql-test')]",
+                                        "groupIds": [
+                                            "sqlServer"
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}

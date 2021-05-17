@@ -1,0 +1,27 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceObject": {
+            "type": "object"
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "name": "[parameters('resourceObject').name]",
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2019-09-01",
+            "location": "[if(contains(parameters('resourceObject'), 'location'), parameters('resourceObject').location, resourceGroup().location)]",
+            "tags": "[if(contains(parameters('resourceObject'), 'tags'), parameters('resourceObject').tags, json('null'))]",
+            "properties": "[parameters('resourceObject').properties]"
+        }
+    ],
+    "outputs": {
+        "vault": {
+            "type": "object",
+            "value": "[reference(concat('Microsoft.KeyVault/vaults/', parameters('resourceObject').name), '2019-09-01', 'Full')]"
+        }
+    }
+}

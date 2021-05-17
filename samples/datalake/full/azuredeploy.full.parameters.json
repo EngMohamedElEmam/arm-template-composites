@@ -1,0 +1,52 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "options": {
+            "value": {
+                "copyMode": "serial"
+            }
+        },
+        "resources": {
+            "value": {
+                "storageAccounts": [
+                    {
+                        "name": "teststoragedatalake1",
+                        "location": "eastus",
+                        "kind": "StorageV2",
+                        "sku": {
+                            "name": "Standard_LRS"
+                        },
+                        "properties": {
+                            "networkAcls": {
+                                "bypass": "AzureServices",
+                                "defaultAction": "Allow",
+                                "ipRules": [],
+                                "virtualNetworkRules": []
+                            },
+                            "isHnsEnabled": true,
+                            "supportsHttpsTrafficOnly": false
+                        }
+                    }
+                ],
+                "dataFactories": [
+                    {
+                        "name": "test-factory",
+                        "identity": {
+                            "type": "SystemAssigned"
+                        },
+                        "properties": {
+                            "repoConfiguration": {
+                                "accountName": "testorg",
+                                "repositoryName": "testrepo",
+                                "collaborationBranch": "main",
+                                "rootFolder": "/",
+                                "type": "FactoryGitHubConfiguration"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}

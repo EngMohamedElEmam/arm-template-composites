@@ -1,0 +1,45 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourcesApiVersion": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "resourceDefinition": {
+            "type": "object"
+        },
+        "resources": {
+            "type": "object",
+            "defaultValue": {}
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "[parameters('resourcesApiVersion')]",
+            "name": "[concat(deployment().name, '-r')]",
+            "type": "Microsoft.Resources/deployments",
+            "condition": "[contains(parameters('resources'), parameters('resourceDefinition').name)]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'resourceloop.json')]"
+                },
+                "parameters": {
+                    "resourcesApiVersion": {
+                        "value": "[parameters('resourcesApiVersion')]"
+                    },
+                    "templateLinkLeaf": {
+                        "value": "[parameters('resourceDefinition').uri]"
+                    },
+                    "resources": {
+                        "value": "[parameters('resources')[parameters('resourceDefinition').name]]"
+                    }
+                }
+            },
+            "dependsOn": [
+            ]
+        }
+    ]
+}

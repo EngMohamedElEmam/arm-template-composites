@@ -1,0 +1,60 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourcesApiVersion": {
+            "type": "string"
+        },
+        "resourceUri": {
+            "type": "string"
+        },
+        "resourceObject": {
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[parameters('resourcesApiVersion')]",
+            "name": "[concat(deployment().name, '-e')]",
+            "condition": "[if(contains(parameters('resourceObject'), 'skipResourceObjParamEval'), bool('false'), bool('true'))]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [],
+                    "outputs": {
+                        "expandedObject": {
+                            "type": "object",
+                            "value": "[parameters('resourceObject')]"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "[parameters('resourcesApiVersion')]",
+            "name": "[concat(deployment().name, '-r')]",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[if(contains(parameters('resourceObject'), 'resourceGroup'), parameters('resourceObject').resourceGroup, resourceGroup().name)]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, concat('../../', parameters('resourceUri')))]"
+                },
+                "parameters": {
+                    "resourcesApiVersion": {
+                        "value": "[parameters('resourcesApiVersion')]"
+                    },
+                    "resourceObject": {
+                        "value": "[if(contains(parameters('resourceObject'), 'skipResourceObjParamEval'), parameters('resourceObject'), reference(concat(deployment().name, '-e')).outputs.expandedObject.value)]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(deployment().name, '-e')]"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceObject": {
+            "type": "object"
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "name": "[parameters('resourceObject').name]",
+            "type": "Microsoft.DataFactory/factories",
+            "apiVersion": "2018-06-01",
+            "location": "[if(contains(parameters('resourceObject'), 'location'), parameters('resourceObject').location, resourceGroup().location)]",
+            "tags": "[if(contains(parameters('resourceObject'), 'tags'), parameters('resourceObject').tags, json('null'))]",
+            "identity": "[if(contains(parameters('resourceObject'), 'identity'), parameters('resourceObject').identity, json('null'))]",
+            "properties": "[parameters('resourceObject').properties]"
+        }
+    ],
+    "outputs": {
+        "vault": {
+            "type": "object",
+            "value": "[reference(concat('Microsoft.DataFactory/factories/', parameters('resourceObject').name), '2018-06-01', 'Full')]"
+        }
+    }
+}

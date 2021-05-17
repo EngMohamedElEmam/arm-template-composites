@@ -1,0 +1,29 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceObject": {
+            "type": "object"
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "name": "[parameters('resourceObject').name]",
+            "type": "Microsoft.ContainerService/managedClusters",
+            "apiVersion": "2020-03-01",
+            "location": "[if(contains(parameters('resourceObject'), 'location'), parameters('resourceObject').location, resourceGroup().location)]",
+            "tags": "[if(contains(parameters('resourceObject'), 'tags'), parameters('resourceObject').tags, json('null'))]",
+            "properties": "[parameters('resourceObject').properties]",
+            "identity": "[if(contains(parameters('resourceObject'), 'identity'), parameters('resourceObject').identity, json('null'))]",
+            "sku": "[if(contains(parameters('resourceObject'), 'sku'), parameters('resourceObject').sku, json('null'))]"
+        }
+    ],
+    "outputs": {
+        "managedCluster": {
+            "type": "object",
+            "value": "[reference(concat('Microsoft.ContainerService/managedClusters/', parameters('resourceObject').name), '2020-03-01', 'Full')]"
+        }
+    }
+}

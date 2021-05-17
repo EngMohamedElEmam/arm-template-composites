@@ -1,0 +1,29 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceObject": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        "properties": "[if(contains(parameters('resourceObject'), 'elasticPoolId'), union(parameters('resourceObject').properties, json(concat('{\"elasticPoolId\": \"', parameters('resourceObject').elasticPoolId, '\"}'))), parameters('resourceObject').properties)]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('resourceObject').serverName, '/', parameters('resourceObject').name)]",
+            "type": "Microsoft.Sql/servers/databases",
+            "apiVersion": "2019-06-01-preview",
+            "location": "[if(contains(parameters('resourceObject'), 'location'), parameters('resourceObject').location, resourceGroup().location)]",
+            "tags": "[if(contains(parameters('resourceObject'), 'tags'), parameters('resourceObject').tags, json('null'))]",
+            "sku": "[if(contains(parameters('resourceObject'), 'sku'), parameters('resourceObject').sku, json('null'))]",
+            "properties": "[variables('properties')]"
+        }
+    ],
+    "outputs": {
+        "database": {
+            "type": "object",
+            "value": "[reference(parameters('resourceObject').name, '2019-06-01-preview', 'Full')]"
+        }
+    }
+}

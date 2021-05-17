@@ -1,0 +1,28 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceObject": {
+            "type": "object"
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "name": "[parameters('resourceObject').name]",
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2020-02-02-preview",
+            "location": "[if(contains(parameters('resourceObject'), 'location'), parameters('resourceObject').location, resourceGroup().location)]",
+            "tags": "[if(contains(parameters('resourceObject'), 'tags'), parameters('resourceObject').tags, json('null'))]",
+            "kind": "[if(contains(parameters('resourceObject'), 'kind'), parameters('resourceObject').kind, json('null'))]",
+            "properties": "[parameters('resourceObject').properties]"
+        }
+    ],
+    "outputs": {
+        "vault": {
+            "type": "object",
+            "value": "[reference(concat('Microsoft.Insights/components/', parameters('resourceObject').name), '2020-02-02-preview', 'Full')]"
+        }
+    }
+}

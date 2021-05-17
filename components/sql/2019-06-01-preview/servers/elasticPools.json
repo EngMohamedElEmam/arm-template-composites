@@ -1,0 +1,28 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceObject": {
+            "type": "object"
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('resourceObject').serverName, '/', parameters('resourceObject').name)]",
+            "type": "Microsoft.Sql/servers/elasticPools",
+            "apiVersion": "2019-06-01-preview",
+            "location": "[if(contains(parameters('resourceObject'), 'location'), parameters('resourceObject').location, resourceGroup().location)]",
+            "tags": "[if(contains(parameters('resourceObject'), 'tags'), parameters('resourceObject').tags, json('null'))]",
+            "sku": "[if(contains(parameters('resourceObject'), 'sku'), parameters('resourceObject').sku, json('null'))]",
+            "properties": "[parameters('resourceObject').properties]"
+        }
+    ],
+    "outputs": {
+        "elasticPool": {
+            "type": "object",
+            "value": "[reference(parameters('resourceObject').name, '2019-06-01-preview', 'Full')]"
+        }
+    }
+}

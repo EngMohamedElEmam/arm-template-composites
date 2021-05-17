@@ -1,0 +1,28 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceObject": {
+            "type": "object"
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "name": "[parameters('resourceObject').name]",
+            "type": "Microsoft.Sql/servers",
+            "apiVersion": "2019-06-01-preview",
+            "location": "[if(contains(parameters('resourceObject'), 'location'), parameters('resourceObject').location, resourceGroup().location)]",
+            "tags": "[if(contains(parameters('resourceObject'), 'tags'), parameters('resourceObject').tags, json('null'))]",
+            "identity": "[if(contains(parameters('resourceObject'), 'identity'), parameters('resourceObject').identity, json('null'))]",
+            "properties": "[parameters('resourceObject').properties]"
+        }
+    ],
+    "outputs": {
+        "server": {
+            "type": "object",
+            "value": "[reference(concat('Microsoft.Sql/servers/', parameters('resourceObject').name), '2019-06-01-preview', 'Full')]"
+        }
+    }
+}

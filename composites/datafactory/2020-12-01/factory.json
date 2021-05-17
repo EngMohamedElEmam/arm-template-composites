@@ -1,0 +1,34 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourcesApiVersion": {
+            "type": "string"
+        },
+        "resourceObject": {
+            "type": "object"
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "apiVersion": "[parameters('resourcesApiVersion')]",
+            "name": "[concat(deployment().name, '-df')]",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, '../../../components/datafactory/2018-06-01/factories.json')]"
+                },
+                "parameters": {
+                    "resourceObject": {
+                        "value": "[parameters('resourceObject')]"
+                    }
+                }
+            },
+            "dependsOn": [
+            ]
+        }
+    ]
+}

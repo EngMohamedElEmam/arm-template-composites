@@ -1,0 +1,124 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourcesApiVersion": {
+            "type": "string"
+        },
+        "resourceObject": {
+            "type": "object"
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "apiVersion": "[parameters('resourcesApiVersion')]",
+            "name": "[concat(deployment().name, '-sql')]",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, '../../../components/sql/2019-06-01-preview/servers.json')]"
+                },
+                "parameters": {
+                    "resourceObject": {
+                        "value": "[parameters('resourceObject')]"
+                    }
+                }
+            },
+            "dependsOn": [
+            ]
+        },
+        {
+            "apiVersion": "[parameters('resourcesApiVersion')]",
+            "name": "[concat(deployment().name, '-ad')]",
+            "type": "Microsoft.Resources/deployments",
+            "condition": "[contains(parameters('resourceObject'), 'activeDirectory')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, '../../../components/sql/2019-06-01-preview/servers/administrators.json')]"
+                },
+                "parameters": {
+                    "resourceObject": {
+                        "value": "[union(json(concat('{\"serverName\": \"', parameters('resourceObject').name, '\"}')), parameters('resourceObject').activeDirectory)]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(deployment().name, '-sql')]"
+            ]
+        },
+        {
+            "apiVersion": "[parameters('resourcesApiVersion')]",
+            "name": "[concat(deployment().name, '-ep')]",
+            "type": "Microsoft.Resources/deployments",
+            "condition": "[contains(parameters('resourceObject'), 'elasticPool')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, '../../../components/sql/2019-06-01-preview/servers/elasticPools.json')]"
+                },
+                "parameters": {
+                    "resourceObject": {
+                        "value": "[union(json(concat('{\"serverName\": \"', parameters('resourceObject').name, '\"}')), parameters('resourceObject').elasticPool)]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(deployment().name, '-sql')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "name": "[concat(deployment().name, '-db-', copyIndex())]",
+            "apiVersion": "[parameters('resourcesApiVersion')]",
+            "condition": "[contains(parameters('resourceObject'), 'databases')]",
+            "copy": {
+                "name": "dbcopy",
+                "count": "[if(contains(parameters('resourceObject'), 'databases'), length(parameters('resourceObject').databases), 1)]"
+            },
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, '../../../components/sql/2019-06-01-preview/servers/databases.json')]"
+                },
+                "parameters": {
+                    "resourceObject": {
+                        "value": "[union(json(concat('{\"serverName\": \"', parameters('resourceObject').name, '\"}')), if(contains(parameters('resourceObject'), 'elasticPool'), json(concat('{\"elasticPoolId\": \"', resourceId('Microsoft.Sql/servers/elasticPools', parameters('resourceObject').name, parameters('resourceObject').elasticPool.name), '\"}')), json('null')), parameters('resourceObject').databases[copyIndex()])]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(deployment().name, '-sql')]",
+                "[concat(deployment().name, '-ep')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "name": "[concat(deployment().name, '-fwr-', copyIndex())]",
+            "apiVersion": "[parameters('resourcesApiVersion')]",
+            "condition": "[contains(parameters('resourceObject'), 'firewallRules')]",
+            "copy": {
+                "name": "fwrcopy",
+                "count": "[if(contains(parameters('resourceObject'), 'firewallRules'), length(parameters('resourceObject').firewallRules), 1)]"
+            },
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, '../../../components/sql/2019-06-01-preview/servers/firewallRules.json')]"
+                },
+                "parameters": {
+                    "resourceObject": {
+                        "value": "[union(json(concat('{\"serverName\": \"', parameters('resourceObject').name, '\"}')), parameters('resourceObject').firewallRules[copyIndex()])]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(deployment().name, '-sql')]",
+                "[concat(deployment().name, '-ep')]"
+            ]
+        }
+    ]
+}

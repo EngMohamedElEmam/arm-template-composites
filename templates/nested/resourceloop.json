@@ -1,0 +1,46 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourcesApiVersion": {
+            "type": "string"
+        },
+        "templateLinkLeaf": {
+            "type": "string"
+        },
+        "resources": {
+            "type": "array"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "[parameters('resourcesApiVersion')]",
+            "name": "[concat(deployment().name, '-rl-', copyIndex())]",
+            "copy": {
+                "name": "resourcecopy",
+                "count": "[length(parameters('resources'))]"
+            },
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'resource.json')]"
+                },
+                "parameters": {
+                    "resourcesApiVersion": {
+                        "value": "[parameters('resourcesApiVersion')]"
+                    },
+                    "resourceUri": {
+                        "value": "[parameters('templateLinkLeaf')]"
+                    },
+                    "resourceObject": {
+                        "value": "[parameters('resources')[copyIndex()]]"
+                    }
+                }
+            },
+            "dependsOn": [
+            ]
+        }
+    ]
+}
