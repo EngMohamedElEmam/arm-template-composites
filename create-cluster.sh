@@ -28,7 +28,7 @@ export LETSENCRYPT_SECRET=star-${DNS_HOSTNAME//./-}
 export AZURE_TENANT_ID=$(az account show --query tenantId --output tsv)
 export AZURE_SUBSCRIPTION_ID=$(az account show --query id --output tsv)
 REPO_ROOT=$(git rev-parse --show-toplevel)
-CLUSTER_DIR="${REPO_ROOT}/clusters/${AKS_CLUSTER_NAME}/"
+CLUSTER_DIR="${REPO_ROOT}/kubernetes-infrastructure/clusters/${AKS_CLUSTER_NAME}/"
 
 echo "*********************************************************"
 echo -e "Azure Tenant id:\t\t${AZURE_TENANT_ID}"
@@ -49,7 +49,7 @@ read -p "Continue? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-    pushd "${REPO_ROOT}/clusters/template/."
+    pushd "${REPO_ROOT}/kubernetes-infrastructure/clusters/template/."
     for f in $(find . ! -path . -type d)
     do
         mkdir -p "${CLUSTER_DIR}${f//.}"

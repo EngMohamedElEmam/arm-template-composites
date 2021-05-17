@@ -18,3 +18,6 @@ PS /home/mohamed> az aks get-credentials --resource-group rg-prd-aks --name aks-
 
 # switch to bash then rum iam.sh 
 mohamed@Azure:~$ sh iam.sh
+
+
+After Deploying ARM template will use script create-cluster.sh to create the cluster from cluster services template and modify create-cluster.sh line 31 and 52 for the correct path for repo working directory (check https://github.com/EngMohamedElEmam/flux-test/tree/master/kubernetes-infrastructure/README.md)
